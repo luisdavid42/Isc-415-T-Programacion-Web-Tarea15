@@ -1,0 +1,174 @@
+<html>
+
+  <head>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+          crossorigin="anonymous">
+      <link rel="stylesheet" href="../static/awesomplete.css" />
+
+      <style>
+          .main {
+              padding-left: 8px;
+          }
+      </style>
+  </head>
+
+  <body>
+      <h1>Movie Search</h1>
+
+      <div id="Main" class='main'>
+        <form id="movieForm" action="http://localhost:5000/reviews/" method="post">
+          <div class="form-group">
+            <label for="inputName">Movie</label>
+            <input type="text" class="form-control awesomplete" id="inputName" placeholder="Movie Name" name="name" oninput="getSuggestions()" required>
+
+            <br>
+
+            <label for="inputUsername">Username</label>
+            <input type="text" class="form-control" id="inputUsername" name="user" placeholder="superuser" required>
+
+            <br>
+
+            <label for="inputReview">Review</label>
+            <textarea id="inputReview" class="form-control" name="review" rows="3" required></textarea>
+      
+            <br>
+
+            <span id="rangeVal">3</span>
+            <input id="inputRangeSlider" type="range" min="0" max="5" step="1" name="score" oninput="showRatingValue(this.value)" onchange="showRatingValue(this.value)">
+
+
+            <button id="submit" type="submit">Add</button> 
+        </form>
+        <br>
+
+        <div id="content">
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script src="../static/awesomplete.js" async></script>
+  <script>
+    var currentName="";
+    var currentPage=0;
+    var results=0;
+    var pages=0;
+    var api_key= "492c7fa7d569781eb1e66f5aaa4a834f";
+    var movieName;
+    var timeout = null;
+    var list = [];
+    var form = document.getElementById('movieForm');
+    Array.prototype.contains = function ( value ) {
+        for (i in this) {
+            if (this[i] == value) 
+              return true;
+        }
+        return false;
+      }
+    function getSuggestions(){
+      
+      var input = document.getElementById("inputName");
+      movieName = input.value;
+      if(timeout){
+        clearTimeout(timeout);
+      }
+      if(movieName.length>=2){
+        timeout = setTimeout(getSuggestionsLocalDb, 2000);
+      }
+    }
+      
+      function getSuggestionsLocalDb(){
+        var url = "http://localhost:5000/movies/search?name=" + movieName;
+        var xhr = new XMLHttpRequest();
+       
+        xhr.onreadystatechange = function () {
+          //si no encuentra la pelicula en la base de datos local, la busca en movieDB
+        if (this.readyState == 4 && this.status == 200) {
+            showResults(JSON.parse(this.responseText));
+        }
+        else if (this.readyState == 4 && this.status == 404){
+            getSuggestionsServerDb();
+           
+          }
+        };
+        xhr.open("GET", url, true);
+        xhr.send();
+        function showResults(response) {
+          for(var idx = 0; idx<response.length && idx<3; idx++){
+            if(list.contains(response[idx].name)){
+              
+            }
+            else {
+              list.push(response[idx].name);
+            }
+          }
+          var input = document.getElementById("inputName");
+          new Awesomplete(input, {list});
+          document.getElementById("inputName").focus();
+        }
+      }
+      function getSuggestionsServerDb(){
+        var url = "https://api.themoviedb.org/3/search/movie" + "?api_key=" + api_key + "&query=" + movieName + "&page=" + "1";
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+          console.log(this.responseText);
+          showResults(JSON.parse(this.responseText));
+          }
+          else if(this.readyState == 4 && this.status == 404){
+          }
+        };
+        xhr.open("GET", url);
+        xhr.send();
+        
+        function showResults(response) {
+        for(var idx=0; idx<response.results.length; idx++){
+            if(list.contains(response.results[idx].original_title)){
+              
+            }
+          else {
+            if(idx<3)
+            list.push(response.results[idx].original_title);
+            insertarLocalDb(response.results[idx])
+            
+        }
+      }
+      var input = document.getElementById("inputName");
+        new Awesomplete(input, {list});
+        document.getElementById("inputName").focus();
+      }
+    }
+    function insertarLocalDb(element){
+    var xhr = new XMLHttpRequest();
+    var url = "http://localhost:5000/movies/";
+      xhr.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    successFunction(JSON.parse(this.responseText));
+                }
+                else if (this.readyState == 4 && this.status == 404){
+                    errorFunction();
+                }
+            };
+      xhr.open("post", url, true);
+      var form = new FormData();
+      form.append("name", element.title);
+      form.append("desc", element.overview);
+      poster = "http://image.tmdb.org/t/p/w185" + element.poster_path;
+      form.append("poster", poster);
+      xhr.send(form);
+      function successFunction(response){
+        document.getElementById("inputName").focus();
+      }
+      function errorFunction(){
+        document.getElementById("inputName").focus();
+      }
+  }
+    
+function showRatingValue(value) {
+        var rating = document.getElementById("rangeVal")
+        rating.innerHTML = value;
+      }
+
+    var form = document.getElementById('movieForm');
+  </script>
+</html>

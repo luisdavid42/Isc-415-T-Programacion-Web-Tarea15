@@ -1,0 +1,138 @@
+<html>
+
+  <head>
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+          crossorigin="anonymous">
+
+      <style>
+          .main {
+              padding-left: 8px;
+          }
+      </style>
+  </head>
+
+  <body>
+      <h1>Movie Reviews</h1>
+        <br>
+        <div id="resultsQuantity">
+        </div>
+        
+        
+        <div id="content">
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    var results=0;
+    
+    var showMovieDetails = function(moviename, movierating){
+    var xmlhttp = new XMLHttpRequest();
+    var reqUrl = "http://localhost:5000/movies/search?name=" + moviename;
+      xmlhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    successFunction(JSON.parse(this.responseText));
+                }
+                else if (this.readyState == 4 && this.status == 404){
+                    errorFunction();
+                }
+            };
+    xmlhttp.open("GET", reqUrl, true);
+    xmlhttp.send();
+      function successFunction(res){
+        list = document.getElementById('movies');
+        
+        var moviePoster = document.createElement('img');
+       if(res[0].poster==null) {
+              moviePoster.src="http://itorrent.us/images/movie-poster.jpg"
+        }
+        else {
+            moviePoster.src = "http://localhost:5000/movies/get_image?file=" + moviename + '.jpg';
+        }
+        moviePoster.width = "185";
+        moviePoster.classList.add('img-thumbnail');
+        moviePoster.classList.add('list-group-item');    
+        var movieTitle = document.createElement('li');
+        movieTitle.innerHTML = "Title: " + moviename;
+        movieTitle.classList.add('list-group-item');
+        var movieRating = document.createElement('li');
+        movieRating.classList.add('list-group-item');
+        movieRating.innerHTML = "Avg rating: " + movierating;
+        var movieDesc = document.createElement('li');
+        movieDesc.classList.add('list-group-item');
+        if (res[0].description.length>150)
+            var Description = res[0].description.substr(0,150) + "...";
+        else
+          var Description = res[0].description;
+        movieDesc.innerHTML = "Description: " + Description;
+        var movieDetails = document.createElement('a');
+        movieDetails.classList.add('list-group-item');
+        var movieDetailstext = document.createTextNode('Details');
+        movieDetails.appendChild(movieDetailstext);
+        movieDetails.title = "Details";
+        movieDetails.href = "http://localhost:5000/movies/details.html?id=" + res[0].id;
+        list.appendChild(moviePoster);
+        list.appendChild(movieTitle);
+        list.appendChild(movieRating);
+        list.appendChild(movieDesc);
+        list.appendChild(movieDetails);
+      }
+    function errorFunction(){
+    }
+  };
+
+    var get = function () {
+      var url = "http://localhost:5000/reviews/wiri";
+      var xhr = new XMLHttpRequest();
+      xhr.onreadystatechange = function () {
+        if (this.readyState == 4 && this.status == 200) {
+        console.log(this.responseText);
+        showResults(JSON.parse(this.responseText));
+        }
+      };
+      xhr.open("GET", url);
+      xhr.send();
+      function showResults(response) {
+
+        results = response.length;
+        var resultsElement = document.getElementById('resultsQuantity');
+        resultsElement.innerHTML = "Results: " + results;
+
+
+        // Get the container
+        var container = document.getElementById('content');
+        // Create list element
+        var list = document.createElement('ul');
+        list.id = 'movies';
+        list.classList.add('list-group');
+        // Add list to container
+        container.appendChild(list);
+
+        //ordena los resultados
+        response.sort(function(a,b){
+        var nameA=a.name.toLowerCase(), nameB=b.name.toLowerCase()
+        if (nameA < nameB)
+         return -1;
+        if (nameA> nameB)
+          return 1;
+        return 0;
+      });
+        
+        // Iterate over results
+        for(var idx=0; idx<response.length; idx++){
+          showMovieDetails(response[idx].name, response[idx].rating);
+        }
+      }
+    }
+    
+    function reset(){
+      document.getElementById('content').innerHTML = "";
+      results = 0;
+    }
+
+    get();
+  </script>
+</html>
+
+
