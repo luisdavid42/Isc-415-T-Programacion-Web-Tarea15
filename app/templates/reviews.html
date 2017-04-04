@@ -81,7 +81,6 @@
     function errorFunction(){
     }
   };
-
     var get = function () {
       var url = "http://localhost:5000/reviews/wiri";
       var xhr = new XMLHttpRequest();
@@ -94,12 +93,9 @@
       xhr.open("GET", url);
       xhr.send();
       function showResults(response) {
-
         results = response.length;
         var resultsElement = document.getElementById('resultsQuantity');
         resultsElement.innerHTML = "Results: " + results;
-
-
         // Get the container
         var container = document.getElementById('content');
         // Create list element
@@ -108,7 +104,6 @@
         list.classList.add('list-group');
         // Add list to container
         container.appendChild(list);
-
         //ordena los resultados
         response.sort(function(a,b){
         var nameA=a.name.toLowerCase(), nameB=b.name.toLowerCase()
@@ -130,9 +125,6 @@
       document.getElementById('content').innerHTML = "";
       results = 0;
     }
-
     get();
   </script>
 </html>
-
-

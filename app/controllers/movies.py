@@ -60,3 +60,13 @@ def handle_fomdata():
             db.session.commit()
      
         return "success"
+
+@movies.route('/details.html', methods=['GET'])
+def filldetails():
+    movieid = request.args.get('id')
+    moviecount = Movie.query.filter_by(Id = movieid).count()
+    if moviecount>0:
+        movie = Movie.query.filter_by(Id = movieid).first()
+        return render_template('details.html', name=movie.Name, desc=movie.Description)
+    else:
+        return render_template('reviews.html'), 404
