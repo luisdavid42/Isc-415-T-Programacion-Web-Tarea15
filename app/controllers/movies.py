@@ -19,7 +19,7 @@ def showallmovies():
     return response
 
 @movies.route('/search', methods=['GET'])
-def findmoviebyName():
+def findmoviesbyName():
     moviename = request.args.get('name')
     moviecount = Movie.query.filter(Movie.Name.startswith(moviename)).count()
     if moviecount>0:
@@ -31,6 +31,28 @@ def findmoviebyName():
         return response
     else:
         return render_template('review.html'), 404
+
+@movies.route('/findmovie', methods=['GET'])
+def findmoviebyName():
+    moviename = request.args.get('name')
+    moviecount = Movie.query.filter_by(Name = moviename).count()
+    if moviecount>0:
+        movieresult = Movie.query.filter_by(Name = moviename).first()
+        response = jsonify(movieresult.serialize());
+        return response
+    else:
+        return render_template('review.html'), 404
+
+@movies.route('/details.html', methods=['GET'])
+def filldetails():
+    movieid = request.args.get('id')
+    moviecount = Movie.query.filter_by(Id = movieid).count()
+    if moviecount>0:
+        movie = Movie.query.filter_by(Id = movieid).first()
+        return render_template('details.html', name=movie.Name, desc=movie.Description)
+    else:
+        return render_template('reviews.html'), 404
+
 
 @movies.route('/get_image', methods=['GET'])
 def get_image():
@@ -60,13 +82,3 @@ def handle_fomdata():
             db.session.commit()
      
         return "success"
-
-@movies.route('/details.html', methods=['GET'])
-def filldetails():
-    movieid = request.args.get('id')
-    moviecount = Movie.query.filter_by(Id = movieid).count()
-    if moviecount>0:
-        movie = Movie.query.filter_by(Id = movieid).first()
-        return render_template('details.html', name=movie.Name, desc=movie.Description)
-    else:
-        return render_template('reviews.html'), 404

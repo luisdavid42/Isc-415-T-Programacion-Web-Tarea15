@@ -1,50 +1,46 @@
 <html>
-
   <head>
-      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
-          crossorigin="anonymous">
-      
-      <style>
-          .main {
-              padding-left: 8px;
-          }
-      </style>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+          crossorigin="anonymous"><style>
+    .main {
+        padding-left: 8px;
+    }
+
+    .horizontal {
+      display:inline;
+    }
+    </style>
   </head>
-
   <body>
-      <h1>Movie Reviews</h1>
-        <br>
-        <div id="resultsQuantity">
+    <div class ="div-form horizontal" media>
+      <div id="poster" class="media-left">
+      </div>
+      <div class="media-body">
+        <div id="name" class="media-heading">
+        <h3>{{ name }}</h3>
         </div>
-        
-        <!-- Trigger the modal with a button -->
-        <button type="button" data-toggle="modal" data-target="#myModal">Details</button>
-
-        <!-- Modal -->
-        <div id="myModal" class="modal fade" role="dialog">
-          <div class="modal-dialog">
-
-            <!-- Modal content-->
-            <div class="modal-content">
-              <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Review Details</h4>
-              </div>
-              <div class="modal-body">
-                <p id="Movie">Movie</p>
-                <p id="Username">Username</p>
-                <p id="Review">Review</p>
-                <p id="Rating">Rating</p>
-              </div>
-              <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              </div>
-            </div>
-
+        <div id="desc">
+        <p>{{ desc }}</p>
+        </div>
+      </div>
+    </div>  
+    <div id="list" class="div-form">
+    <h4>Reviews</h4>
+    </div>
+    <!--modal-->
+    <div id="reviewmodal" class="modal fade" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
           </div>
-        </div>
-        
-        <div id="content">
+          <h4 class="modal-title list-group-item" id="modaltitle"> </h4>
+          <div class="modal-body list-group-item">
+            <p id="modalbody"></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
         </div>
       </div>
     </div>
@@ -53,11 +49,21 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <script>
-    var results=0;
-    
-    var showMovieDetails = function(moviename, movierating){
+    var moviename = '{{ name }}';
+    var posterUrl = "http://localhost:5000/movies/get_image?file=" + moviename + ".jpg";
+    function show(){
+      var imagediv = document.getElementById('poster');
+      var poster = document.createElement('img');
+      poster.src = posterUrl;
+      poster.width = "185";
+      poster.classList.add('img-thumbnail');
+      poster.classList.add('media-object');
+      imagediv.appendChild(poster);
+      get(moviename);
+    }
+    var get = function(moviename){
     var xmlhttp = new XMLHttpRequest();
-    var reqUrl = "http://localhost:5000/movies/search?name=" + moviename;
+    var reqUrl = "http://localhost:5000/reviews/search?name=" + moviename;
       xmlhttp.onreadystatechange = function () {
                 if (this.readyState == 4 && this.status == 200) {
                     successFunction(JSON.parse(this.responseText));
@@ -68,100 +74,55 @@
             };
     xmlhttp.open("GET", reqUrl, true);
     xmlhttp.send();
-      function successFunction(res){
-        list = document.getElementById('movies');
-        
-        var moviePoster = document.createElement('img');
-       if(res[0].poster==null) {
-              moviePoster.src="http://itorrent.us/images/movie-poster.jpg"
-        }
-        else {
-            moviePoster.src = "http://localhost:5000/movies/get_image?file=" + moviename + '.jpg';
-        }
-        moviePoster.width = "185";
-        moviePoster.classList.add('img-thumbnail');
-        moviePoster.classList.add('list-group-item');    
-        var movieTitle = document.createElement('li');
-        movieTitle.innerHTML = "Title: " + moviename;
-        movieTitle.classList.add('list-group-item');
-        var movieRating = document.createElement('li');
-        movieRating.classList.add('list-group-item');
-        movieRating.innerHTML = "Avg rating: " + movierating;
-        var movieDesc = document.createElement('li');
-        movieDesc.classList.add('list-group-item');
-        if (res[0].description.length>150)
-            var Description = res[0].description.substr(0,150) + "...";
+    function successFunction(response){ 
+      var listdiv = document.getElementById('list');
+      var list = document.createElement('ul');
+      list.classList.add('list-unstyled');
+      
+      //desplegando reviews
+      for(var idx = 0; idx < response.length; idx++){
+        var moviereview  = document.createElement('dl');
+        moviereview.classList.add('list-group-item');
+        moviereview.onclick = (function() {
+          var desc = response[idx].description;
+          var rating = response[idx].rating;
+          var username = response[idx].user;
+          return function() { 
+            showReviewDetails(username,rating,desc);
+          }
+        })();
+        var rating = document.createElement('dt');
+        rating.innerHTML = "Rating score: " + response[idx].rating;
+        var review = document.createElement('dd');
+        if(response[idx].description.length>150)
+          Description = response[idx].description.substr(0,150) + "...";
         else
-          var Description = res[0].description;
-        movieDesc.innerHTML = "Description: " + Description;
-        var movieDetails = document.createElement('a');
-        movieDetails.classList.add('list-group-item');
-        var movieDetailstext = document.createTextNode('Details');
-        movieDetails.appendChild(movieDetailstext);
-        movieDetails.title = "Details";
-        movieDetails.href = "http://localhost:5000/movies/details.html?id=" + res[0].id;
-        movieDetails.da
-        list.appendChild(moviePoster);
-        list.appendChild(movieTitle);
-        list.appendChild(movieRating);
-        list.appendChild(movieDesc);
-        list.appendChild(movieDetails);
-      }
+          Description = response[idx].description;
+        review.innerHTML = "Review: " + Description; 
+        moviereview.appendChild(rating);
+        moviereview.appendChild(review);
+        list.appendChild(moviereview);
+        }
+      listdiv.appendChild(list);
+      
+    }
     function errorFunction(){
+      var container = document.getElementById('list');
+      var error = document.createElement('h4');
+      var terror = document.createTextNode('No reviews for this movie');
+      error.appendChild(terror);
+      container.appendChild(error); 
     }
   };
-
-    var get = function () {
-      var url = "http://localhost:5000/reviews/wiri";
-      var xhr = new XMLHttpRequest();
-      xhr.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-        console.log(this.responseText);
-        showResults(JSON.parse(this.responseText));
-        }
-      };
-      xhr.open("GET", url);
-      xhr.send();
-      function showResults(response) {
-
-        results = response.length;
-        var resultsElement = document.getElementById('resultsQuantity');
-        resultsElement.innerHTML = "Results: " + results;
-
-
-        // Get the container
-        var container = document.getElementById('content');
-        // Create list element
-        var list = document.createElement('ul');
-        list.id = 'movies';
-        list.classList.add('list-group');
-        // Add list to container
-        container.appendChild(list);
-
-        //ordena los resultados
-        response.sort(function(a,b){
-        var nameA=a.name.toLowerCase(), nameB=b.name.toLowerCase()
-        if (nameA < nameB)
-         return -1;
-        if (nameA> nameB)
-          return 1;
-        return 0;
-      });
-        
-        // Iterate over results
-        for(var idx=0; idx<response.length; idx++){
-          showMovieDetails(response[idx].name, response[idx].rating);
-        }
-      }
-    }
-    
-    function reset(){
-      document.getElementById('content').innerHTML = "";
-      results = 0;
-    }
-
-    get();
+  function showReviewDetails(username,rating,desc){
+    modaltitle = document.getElementById('modaltitle');
+    modaltitle.innerHTML = moviename;
+    modaldesc = document.getElementById('modalbody');
+    modaldesc.innerHTML = username + "<br>";
+    modaldesc.innerHTML += "Rating: " + rating + "<br><br>";
+    modaldesc.innerHTML += desc;
+    $("#reviewmodal").modal('show');
+  }
+  show();
   </script>
 </html>
-
-
